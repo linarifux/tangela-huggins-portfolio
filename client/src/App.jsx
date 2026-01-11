@@ -2,7 +2,7 @@ import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { useSelector } from "react-redux";
 import Navbar from "./components/layout/Navbar";
-import Home from "./pages/public/Home/Home";
+import Home from "./pages/public/home/Home";
 import Contact from "./pages/public/Contact";
 import PostView from "./pages/public/PostView";
 import NotFound from "./pages/public/NotFound";
