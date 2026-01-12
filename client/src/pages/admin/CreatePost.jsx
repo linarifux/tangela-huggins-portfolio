@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux'; // <--- Redux Hooks
+import { useDispatch, useSelector } from 'react-redux';
 import { FiUploadCloud, FiX, FiSave } from 'react-icons/fi';
 import toast from 'react-hot-toast';
-import { createPost, resetBlog } from '../../features/blog/blogSlice'; // <--- Import Action
+import ReactQuill from 'react-quill-new'; 
+import 'react-quill-new/dist/quill.snow.css'; 
+import { createPost, resetBlog } from '../../features/blog/blogSlice';
 
 const CreatePost = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // 1. Select Global State
   const { isLoading, isSuccess, isError, message } = useSelector(
     (state) => state.blog
   );
@@ -22,7 +23,17 @@ const CreatePost = () => {
     file: null
   });
 
-  // 2. Handle Side Effects (Navigation & Notifications)
+  // --- Quill Toolbar Config ---
+  const modules = {
+    toolbar: [
+      [{ 'header': [1, 2, false] }],
+      ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+      [{'list': 'ordered'}, {'list': 'bullet'}],
+      ['link'],
+      ['clean']
+    ],
+  };
+
   useEffect(() => {
     if (isError) {
       toast.error(message || "Failed to create post.");
@@ -33,16 +44,17 @@ const CreatePost = () => {
       navigate('/admin/posts');
     }
 
-    // Cleanup: Reset state when leaving
     return () => {
       dispatch(resetBlog());
     };
   }, [isError, isSuccess, message, navigate, dispatch]);
 
+  // Handle standard inputs
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // Handle File Input
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -51,10 +63,14 @@ const CreatePost = () => {
     }
   };
 
+  // Handle Editor Change (Quill returns just the HTML string)
+  const handleEditorChange = (value) => {
+    setFormData({ ...formData, content: value });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Prepare FormData object
     const data = new FormData();
     data.append('title', formData.title);
     data.append('category', formData.category);
@@ -63,12 +79,11 @@ const CreatePost = () => {
       data.append('file', formData.file);
     }
 
-    // 3. Dispatch Action
     dispatch(createPost(data));
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto pb-24"> 
       
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-serif font-bold">Write New Post</h1>
@@ -142,20 +157,21 @@ const CreatePost = () => {
 
         </div>
 
-        {/* Content Area */}
-        <div>
-          <textarea 
-            name="content"
-            value={formData.content}
-            onChange={handleChange}
-            placeholder="Start writing your story here..."
-            className="w-full min-h-[400px] text-lg leading-relaxed border-none focus:ring-0 focus:outline-none resize-none placeholder-gray-300"
-            required
-          ></textarea>
+        {/* Rich Text Editor Area */}
+        <div className="bg-white">
+           <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Content</label>
+           <ReactQuill 
+             theme="snow"
+             value={formData.content}
+             onChange={handleEditorChange}
+             modules={modules}
+             className="h-80 mb-12" // mb-12 to handle the toolbar height
+             placeholder="Start writing your story here..."
+           />
         </div>
 
         {/* Action Bar */}
-        <div className="fixed bottom-0 left-0 right-0 md:left-64 bg-white border-t border-gray-100 p-4 flex justify-end px-8 z-10">
+        <div className="fixed bottom-0 left-0 right-0 md:left-64 bg-white border-t border-gray-100 p-4 flex justify-end px-8 z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
           <button 
             type="submit" 
             disabled={isLoading}
